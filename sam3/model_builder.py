@@ -3,6 +3,7 @@
 # pyre-unsafe
 
 import os
+from pathlib import Path
 from typing import Optional
 
 import pkg_resources
@@ -583,9 +584,17 @@ def build_sam3_image_model(
         A SAM3 image model
     """
     if bpe_path is None:
-        bpe_path = pkg_resources.resource_filename(
-            "sam3", "assets/bpe_simple_vocab_16e6.txt.gz"
-        )
+        try:
+            bpe_path = pkg_resources.resource_filename(
+                "sam3", "assets/bpe_simple_vocab_16e6.txt.gz"
+            )
+        except Exception:
+            # Fallback for editable/local usage when sam3 isn't installed as a package
+            local_bpe = Path(__file__).resolve().parent / "assets" / "bpe_simple_vocab_16e6.txt.gz"
+            if local_bpe.exists():
+                bpe_path = str(local_bpe)
+            else:
+                raise
 
     # Create visual components
     compile_mode = "default" if compile else None

@@ -6,7 +6,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.typing import NDArray
-from sam3.model.edt import edt_triton
+
+try:
+    from sam3.model.edt import edt_triton
+except Exception:
+    edt_triton = None
 
 
 def sample_box_points(
@@ -175,6 +179,9 @@ def sample_one_point_from_error_center(gt_masks, pred_masks, padding=True):
     else:
         padded_fp_masks = fp_masks
         padded_fn_masks = fn_masks
+
+    if edt_triton is None or not padded_fn_masks.is_cuda:
+        return sample_one_point_from_error_center_slow(gt_masks, pred_masks, padding=padding)
 
     fn_mask_dt = edt_triton(padded_fn_masks)
     fp_mask_dt = edt_triton(padded_fp_masks)
